@@ -1,0 +1,347 @@
+% !TEX program = xelatex
+% 컴파일: xelatex 또는 lualatex (kotex 사용)
+\documentclass[11pt,a4paper]{article}
+
+
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{enumitem}
+\usepackage{bussproofs}
+
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{convention}[definition]{Convention}
+\newtheorem{example}[definition]{Example}
+\newtheorem{proposition}[definition]{Proposition}
+\newtheorem{lemma}[definition]{Lemma}
+\newtheorem{corollary}[definition]{Corollary}
+\theoremstyle{plain}
+
+
+
+% --- 집합 이름: \mathsf / 타입과 expression 이름: 본문 폰트(rm) ---
+\newcommand{\Type}{\mathsf{Type}}
+\newcommand{\Var}{\mathsf{Var}}
+\newcommand{\Lang}{\mathsf{L}}
+\newcommand{\FV}{\mathsf{FV}}
+\newcommand{\ex}[1]{\text{#1}}
+
+\title{The Syntax of FCMF}
+\author{Vdash}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Types}
+
+\begin{definition}[Types]
+The types are defined as follows:
+\begin{itemize}[itemsep=0pt]
+  \item $e$, $t$ and $u$ are types.
+  \item If $\sigma$ and $\tau$ are types, so is $(\sigma\to\tau)$.
+\end{itemize}
+The types $e$, $t$, $u$ are called \emph{base types}, and types of the form $(\sigma\to\tau)$ are called \emph{functional types}. The set of types is written $\Type$.
+\end{definition}
+
+\begin{convention}[Has type]
+We write $\xi:\sigma$ as short for ``$\xi$ has type $\sigma$''.
+\end{convention}
+
+\begin{convention}[Bracketing of types]
+Type brackets associate to the right, so $(\sigma\to(\tau\to\rho))$ is shortened to $(\sigma\to\tau\to\rho)$, and the outermost brackets are omitted. In general we write $\sigma_1\to\dots\to\sigma_n\to\tau$ for $(\sigma_1\to(\sigma_2\to\dots(\sigma_n\to\tau)\dots))$.
+\end{convention}
+
+For $0\le k\le n$ and a base type $\tau$, call $\sigma_{k+1}\to\dots\to\sigma_n\to\tau$ the \emph{$k$-tail} of $\sigma_1\to\dots\to\sigma_n\to\tau$. Tails with different $k$ have different numbers of arrows, hence are different types.
+
+\section{Symbols}
+
+FCMF has \emph{constants} and \emph{variables}.
+
+\begin{itemize}[itemsep=0pt]
+  \item The constants are given by the lexicon of FCMF, which is not part of the syntax defined here. Every constant has exactly one type. Constants with the same written form and different types are different constants. 
+  \item The \emph{variable names} are exactly
+  \[
+    x_1,x_2,\dots,\qquad
+    \alpha_1,\alpha_2,\dots,\qquad
+    \beta_1,\beta_2,\dots,\qquad
+    \gamma_1,\gamma_2,\dots,
+  \]
+  and nothing else is a variable name. The names $\alpha_i$, $\beta_i$, $\gamma_i$ are \emph{pronoun names} for first-, second- and third-person respectively. A \emph{variable} of type $\sigma$ is a variable name together with the type $\sigma$, written $x^\sigma$. A pronoun name has the fixed type $e$, so there are only the variables $\alpha_i^{e}$, $\beta_i^{e}$, $\gamma_i^{e}$. Thus, the set $\Var_\sigma$ of variables of type $\sigma$ is
+  \[
+    \Var_\sigma=\{x_i^\sigma : i\ge1\}\ (\sigma\ne e),\qquad
+    \Var_{e}=\{x_i^{e},\alpha_i^{e},\beta_i^{e},\gamma_i^{e} : i\ge1\}.
+  \]
+  These sets are pairwise disjoint and disjoint from the set of constants; $\Var$ is their union. Variables whose name is a pronoun name are called \emph{pronoun variables}; they are never bound by a $\lambda$ (see Definition~\ref{def:terms}).
+\end{itemize}
+
+\begin{convention}[Letters for variables]
+In the object language, we can simply use $x$ for $x_1$; $\alpha$ for $\alpha_1$; $\beta$ for $\beta_1$; $\gamma$ for $\gamma_1$ if it causes no ambiguity (In metalanguage, we simply use $x$ to say of any variable). Besides $x_i$ we may use $y$ and $z$ as variable names: $y$ and $z$ are abbreviations of $x_2$ and $x_3$ respectively. (For upper and lower case, see Section~\ref{sec:case}.)
+\end{convention}
+
+\section{Terms}\label{sec:terms}
+
+FCMF has no brackets in its terms. Terms are therefore defined directly as strings of \emph{tokens}, and it can be proved that every term can be read in exactly one way.
+
+\begin{definition}[Tokens]
+There are three kinds of tokens.
+\begin{itemize}[itemsep=0pt]
+  \item A \emph{constant token} $c^\sigma$, for each constant $c$ of type $\sigma$.
+  \item A \emph{variable token} $x^\sigma$, for each $x\in\Var_\sigma$.
+  \item A \emph{binder token} $\lambda_\tau x^\sigma.$, for each non-pronoun variable $x\in\Var_\sigma$ and each type $\tau$. Here $\sigma$ is the type of the bound variable and $\tau$ is the type of the scope (see below).
+\end{itemize}
+Constant tokens and variable tokens are called \emph{atoms}. A \emph{string} is a finite sequence of tokens; its length is the number of its tokens.
+\end{definition}
+Before we define \textit{terms}, let us first define \textit{head} and \textit{argument}:
+
+\begin{definition}[Head, argument]
+Let $M=HN_1\cdots N_k$ with $k\ge0$ and $H$ an atom or a $\lambda$-abstract (see below). Then $H$ is the \emph{head} of $M$ and $N_1,\dots,N_k$ are its \emph{arguments}. 
+\end{definition}
+
+\begin{definition}[Terms]\label{def:terms}
+The set $\Lang_\sigma$ of \emph{terms of type $\sigma$} is defined, for all $\sigma$ simultaneously, as a set of strings. 
+\begin{enumerate}[label=(T\arabic*),itemsep=0pt]
+  \item Every constant token $c^\sigma$ and every variable token $x^\sigma$ is in $\Lang_\sigma$.
+  \item If $M\in\Lang_\tau$ and $\lambda_\tau x^\sigma.$ is a binder token, then the string $\lambda_\tau x^\sigma. M$ is in $\Lang_{\sigma\to\tau}$. Such a term is a \emph{$\lambda$-abstract}, and $M$ is its \emph{scope}.
+  \item Let $H\in\Lang_\rho$ be a head, where $\rho=\sigma_1\to\dots\to\sigma_n\to\tau$ and $\tau$ is a base type. If $1\le k\le n$ and $N_i\in\Lang_{\sigma_i}$ for $1\le i\le k$, then the string $HN_1N_2\cdots N_k$ is in $\Lang_{\sigma_{k+1}\to\dots\to\sigma_n\to\tau}$, i.e.\ it has the $k$-tail of $\rho$ as its type.
+\end{enumerate}
+Only strings that can be built by these rules are terms. The set of all terms is $\Lang=\bigcup_\sigma\Lang_\sigma$. A term of type $t$ is a \emph{proposition}, and a term of type $u$ is an \emph{utterance}. 
+\end{definition}
+A complete sentence of FCMF is expected to have type $u$, that is, it is expected to be an utterance. Additionally, when we speak of heads or arguments of $M$ we usually assume $M$ is a term of FCMF if not otherwise indicated. 
+
+Every term has the form $HN_1\cdots N_k$ with $H$ a head and $k\ge0$. Note that no brackets occur: the type $\tau$ written in a binder token marks where the scope of the $\lambda$ ends, and the types of heads mark how many arguments they can at most take. 
+
+This definition allows no ambiguity in reading despite we do not have brackets:
+
+\begin{proposition}[Unique Reading]\label{prop:unique}
+  Every term $M$ has exactly one type, and there are unique
+$H$, $k\ge0$ and $N_1,\dots,N_k$ such that
+$M=HN_1\cdots N_k$ where $H$ is an atom or a $\lambda$-abstract,
+and the conditions of (T1)--(T3) hold. 
+\end{proposition}
+The proof is left for the appendix.
+
+However, for human users it may be sometimes difficult to check what the scope of a $\lambda$-abstract exactly is. Thus we introduce the following convention:
+
+\begin{convention}[Semicolon]
+  If $\lambda_\sigma x^\sigma. M$ is a lambda abstract, one may write $\lambda_\sigma x^\sigma. M;$ in the place of $\lambda_\sigma x^\sigma. M$.
+\end{convention}
+
+But it should be noted that semicolons are not a part of the term of FCMF.
+
+Finally, we define free and bound occurrences of variables and the distinction between open and closed terms:
+
+\begin{definition}[Free variable]
+The set $\FV(M)$ of free variables of a term $M$ is defined inductively:
+\begin{itemize}[itemsep=0pt]
+  \item $\FV(c^\sigma)=\varnothing$ for a constant token $c^\sigma$;
+  \item $\FV(x^\sigma)=\{x^\sigma\}$ for a variable token $x^\sigma$;
+  \item $\FV(HN_1\cdots N_k)=\FV(M)\cup\FV(N_1)\cup\cdots\cup\FV(N_k)$;
+  \item $\FV(\lambda_\tau x^\sigma. M)=\FV(M)\setminus\{x^\sigma\}$.
+\end{itemize}
+A term $M$ is \emph{closed} if $\FV(M)=\varnothing$, and \emph{open} otherwise.
+\end{definition}
+
+
+\section{Type superscripts}\label{sec:super}
+
+\begin{convention}[Type annotation]
+Every token carries its type: a constant token $c^\sigma$ and a variable token $x^\sigma$ carry the type $\sigma$, and a binder token $\lambda_\tau x^\sigma.$ carries both the type $\sigma$ of the bound variable and the type $\tau$ of its scope. The type of a complex term is determined by those of its tokens and is never written. Thus, in written FCMF every constant and every variable carries its type, and every $\lambda$ carries the type of its scope as a subscript, apart from the following exceptions. 
+\end{convention}
+
+\begin{convention}[Exceptions]
+\begin{enumerate}[label=(E\arabic*),itemsep=2pt]
+  \item \emph{Subscripts} For some constants such as $\exists$, $\forall$, $=$, etc., the type is indicated by a \emph{subscript} instead of a superscript, giving the type $\sigma$ of the things they receive:
+  \[
+    \exists_\sigma,\ \forall_\sigma\ \text{ stand for }\ \exists^{(\sigma\to t)\to t},\ \forall^{(\sigma\to t)\to t},\qquad
+    =_\sigma\ \text{ stands for }\ =^{\sigma\to\sigma\to t}.
+  \]
+  No further superscript is written on these constants.
+  \item \emph{Bound variables.} The type of a bound variable should be written in its binder token: $\lambda_\tau x^\sigma.$. Other occurrences of $x$ in the scope of this binder token may be written without superscript if it does not cause ambiguity, and have the type of the nearest enclosing binder token that binds that variable. A free variable always carries its superscript.
+  \item \emph{Pronoun variables.} Since $\alpha_i$, $\beta_i$, $\gamma_i$ have the fixed type $e$, they may be written without superscript. 
+\end{enumerate}
+\end{convention}
+
+\section{Orthographic case}\label{sec:case}
+
+A written form of a term is \emph{alphabetic} if it comprises Latin letters, and \emph{caseless} otherwise (e.g.\ $\land$, $\exists$, $\vdash$, $\alpha_i$).
+
+\begin{definition}[Case]
+Alphabetic written forms that differ only in the capitalization denote the same symbol. Case is not part of the identity of a symbol; it is a variant of notation.
+\end{definition}
+
+
+\noindent\textbf{Case rule.} Every occurrence of an alphabetic symbol, if it is not a part of a binder token, is written with a capitalized letter (\emph{head form}) iff it is a head of a subterm $HN_1\cdots N_k$ with $k\ge1$, and with a lower case (\emph{argument form}) otherwise. Variables in a binder token is always written with a lower case. Caseless symbols are written in the same way in both positions.
+
+\section{Examples}
+
+\begin{example}
+``Socrates has a good property.''
+\[
+\vdash^{t\to u} \exists_{e\to t} \lambda_t x^{e\to t}. \land^{t\to t\to t} X \text{socrates}^{e} \text{GOOD}^{(e\to t)\to t} x 
+\]
+
+We may check that this string has type $u$ as follows:
+
+\begin{center}
+\small
+% (1) Φ의 도출
+\begin{prooftree}
+\AxiomC{$\land : t\to t\to t$}
+\AxiomC{$x : e\to t$}
+\AxiomC{$\text{socrates} : e$}
+\RightLabel{App}
+\BinaryInfC{$X\text{socrates} : t$}
+\RightLabel{App}
+\BinaryInfC{$\land X\text{socrates} : t\to t$}
+\AxiomC{$\text{GOOD} : (e\to t)\to t$}
+\AxiomC{$x : e\to t$}
+\RightLabel{App}
+\BinaryInfC{$\text{GOOD}x : t$}
+\RightLabel{App}
+\BinaryInfC{$\land X\text{socrates}\,\text{GOOD}x : t$}
+\RightLabel{Abs}
+\UnaryInfC{$\lambda_t x^{e\to t}.\land X\text{socrates}\,\text{GOOD}x: (e\to t)\to t$}
+\end{prooftree}
+
+\medskip
+\noindent Let $\Phi := \lambda_t x^{e\to t}.\land^{t\to t\to t}X\text{socrates}^e\,\text{GOOD}^{(e\to t) \to t}x$
+
+\medskip
+% (2) 전체 도출
+\begin{prooftree}
+\AxiomC{$\vdash : t\to u$}
+\AxiomC{$\exists_{e\to t} : ((e\to t)\to t)\to t$}
+\AxiomC{$\Phi : (e\to t)\to t$}
+\RightLabel{App}
+\BinaryInfC{$\exists_{e\to t}\,\Phi : t$}
+\RightLabel{App}
+\BinaryInfC{$\vdash\exists_{e\to t}\,\Phi : u$}
+\end{prooftree}
+\end{center}
+\end{example}
+
+\begin{example}
+``I like him/her/it.''
+\[
+\vdash^{t\to u} \text{SIS}^{e\to e\to t} \alpha \gamma
+\]
+Here $\alpha$ and $\gamma$ are pronoun variables of type $e$ and carry no superscript, by (E3).
+\end{example}
+
+\begin{example}
+``That predicate is good.'' A demonstrative of type $e\to t$ is not a pronoun variable, so it is an ordinary free variable that carries its type:
+\[
+\vdash^{t\to u} \text{GOOD}^{(e\to t)\to t} y^{e\to t}
+\]
+\end{example}
+
+\begin{example}
+``The cat is on a mat.'' It is always possible to follow Russell in definite descriptions:
+\[
+\vdash^{t\to u} \exists_e \lambda_t x^e. \land^{t\to t\to t} \exists_e \lambda_t y^e. \land^{t\to t\to t} \land^{t\to t\to t} \text{BIL}^{e\to t} y \, \forall_e \lambda_t z^e. \supset^{t\to t\to t} \text{BIL}^{e\to t} z \, {=_e} z y \, \text{AM}^{e\to e\to t} x y \, \text{TIKIR}^{e\to t} x
+\]
+which can be abbreviated into:
+\[
+\vdash^{t\to u} \exists_e\lambda_t x^e.\land^{t\to t\to t} \text{AM}^{e\to e\to t}x\iota_e\text{bil}^{e\to t}\text{TIKIR}^{e\to t}x
+\]
+($\iota_\sigma$ has type $(\sigma \to t)\to\sigma$)
+
+This is, strictly speaking, false even if there is a particular cat on a mat, since there are more than one cats in the world. In natural language, in these case we consider the quantifier to be implicitly restricted. This is a pragmatic phenomenon, thus FCMF of course can be used such way. However, another way to translate the natural language sentence ``The cat is on a mat'' is using demonstratives --- that is, free variables:
+\[
+\vdash^{t\to u} \exists_e \lambda_t x^e. \land^{t\to t\to t} \text{AM}^{e\to e\to t}xy^e \land^{t\to t\to t}\text{BIL}^{e\to t}y^e\text{TIKIR}^{e\to t}x
+\]
+Or one may use the third-person pronoun if one wishes:
+\[
+\vdash^{t\to u} \exists_e \lambda_t x^e. \land^{t\to t\to t} \text{AM}^{e\to e\to t}x\gamma \land^{t\to t\to t}\text{BIL}^{e\to t}\gamma\text{TIKIR}^{e\to t}x
+\]
+\end{example}
+
+\begin{example}
+  ``What is a relation between Socrates and Plato?''
+  \[ \text{WHAT}?^{((e\to e\to t) \to t) \to u} \lambda_t x^{e\to e\to t}. X\text{socrates}^e\text{plato}^e 
+  \]
+\end{example}
+
+\begin{example}
+  ``The relation between Plato and Aristotle is not transitive''
+  \[ \vdash^{t\to u}
+\lambda_t x^{e\to e\to t}. \lnot^{t\to t}
+\forall_e \lambda_t y^{e}. \forall_e \lambda_t z^{e}. \forall_e \lambda_t x_4^{e}. 
+\supset^{t\to t\to t} \land^{t\to t\to t} X y z X z x_4 X y x_4 ; 
+\iota_{e\to e\to t} \lambda_t x^{e\to e\to t}. X\text{plato}^{e}\text{aristotle}^{e} \]
+Again, literally taken this is false because there are more than one relation between Plato and Aristotle. The above sentence is lengthy, considering that $\iota$ is already an abbreviation. One may introduce the predicate ``$\text{TRIRE}^{(e\to e\to t) \to t}$'', and write:
+\[\vdash^{t\to u} \lnot^{t\to t} \text{TRIRE}^{(e\to e\to t)\to t}
+\iota_{e\to e\to t} \lambda_t x^{e\to e\to t}. X\text{plato}^{e}\text{aristotle}^{e} \]
+And if one uses demonstratives:
+\[ \vdash^{t\to u} \lambda_tx^{e\to e\to t}. \land^{t\to t\to t} X^{e\to e\to t}\text{plato}^{e}\text{aristotle}^{e} \lnot^{t\to t} \text{TRIRE}^{(e\to e\to t)\to t}x^{e\to e\to t};y^{e\to e\to t}
+\]
+\end{example}
+Readers may check that every example above has type $u$.
+
+\appendix
+\section{The proof of Proposition 3.4}
+
+We first prove the prefix-free lemma:
+
+\begin{lemma}[Prefix-freeness]\label{lem:prefix}
+Let $\sigma$ be a type, $w\in\Lang_\sigma$, and let $u$ be a string
+such that $wu\in\Lang_\sigma$. Then $u$ is empty.
+\end{lemma}
+
+\begin{proof}[Proof of Lemma~\ref{lem:prefix}]
+By strong induction on the length of $wu$.
+Every term has the form $HN_1\cdots N_k$ ($k\ge0$) with $H$ an atom
+or a $\lambda$-abstract $\lambda_\tau x^{\sigma'}.P$ with $P\in\Lang_\tau$
+(by (T1)--(T3); (T2) is the case $k=0$).
+Write
+\[
+  w=HN_1\cdots N_k,\qquad wu=H'N_1'\cdots N_{k'}'.
+\]
+\emph{Step 1: $H=H'$.}
+Both begin with the same first token.
+If it is an atom, then $H=H'$.
+If it is a binder token $\lambda_\tau x^{\sigma'}.$, then
+$H=\lambda_\tau x^{\sigma'}.P$ and $H'=\lambda_\tau x^{\sigma'}.P'$
+with $P,P'\in\Lang_\tau$. Both are initial segments of the string
+following the binder token, so one is a prefix of the other.
+Both are shorter than $wu$, so by the induction hypothesis $P=P'$.
+
+\emph{Step 2: $k=k'$.}
+Let $\rho=\sigma_1\to\dots\to\sigma_n\to\beta$ ($\beta$ base) be the type of $H$;
+it is determined by the first token(s) of $H$.
+By (T3), $w$ has the $k$-tail of $\rho$ and $wu$ has the $k'$-tail of $\rho$ as type.
+Both equal $\sigma$, and the $k$-tail has $n-k$ arrows,
+so $n-k=n-k'$, i.e.\ $k=k'$.
+
+\emph{Step 3: $N_i=N_i'$ for all $i$.}
+Suppose $N_j=N_j'$ for $j<i$. Then $N_i$ and $N_i'$ both start at the same
+position and both are in $\Lang_{\sigma_i}$, so one is a prefix of the other.
+Both are shorter than $wu$, so the induction hypothesis gives $N_i=N_i'$.
+
+Hence $w$ and $wu$ are the same string and $u$ is empty.
+\end{proof}
+
+\begin{proof}[Proof of Proposition~\ref{prop:unique}]
+\emph{Existence} is immediate from the definition of $\Lang$:
+$M$ is built by (T1), (T2) or (T3), which gives the form $HN_1\cdots N_k$
+with $k=0,0,\ge1$ respectively.
+
+\emph{Uniqueness.} Let
+$M=HN_1\cdots N_k=H'N_1'\cdots N_{k'}'$ be two readings.
+As in Step~1 of the Lemma, $H=H'$ (for an abstract head, $P=P'$ by Lemma~\ref{lem:prefix}
+applied to the types $\tau$ given by the common binder token).
+Hence $H$ and $H'$ have the same type $\rho=\sigma_1\to\dots\to\sigma_n\to\beta$.
+Suppose $N_j=N_j'$ for all $j<i$ with $i\le\min(k,k')$.
+Then $N_i,N_i'\in\Lang_{\sigma_i}$ start at the same position,
+so by Lemma~\ref{lem:prefix} $N_i=N_i'$.
+If $k<k'$, then after $N_k=N_k'$ the string $M$ has ended, but $N_{k+1}'$ is a
+nonempty string occurring after it; contradiction. The case $k'<k$ is symmetric.
+So $k=k'$ and the two readings coincide.
+Finally, the type of $M$ is the $k$-tail of $\rho$, determined by $H$ and $k$,
+so $M$ has exactly one type.
+\end{proof}
+
+
+\end{document}
